@@ -4,7 +4,7 @@ import queue
 
 messages = queue.Queue()
 
-ip = "192.168.100.1"
+ip = "192.168.1.1"
 port = int(1234)
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server.bind((ip, port))
