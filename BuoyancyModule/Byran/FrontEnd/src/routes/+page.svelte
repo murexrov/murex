@@ -1,7 +1,7 @@
 <div class="absolute flex flex-col w-screen py-10 items-center justify-center font-medium text-3xl text-neutral-200">
   <h1>MUREX ROV Buoyancy Module Topside Control</h1>
   <h1 class="text-lg font-normal">ESP32 with BLE GATT, Custom 128-bit UUID Service</h1>
-  <h1 class="text-lg font-normal">Chrome 58+, Bluetooth Web API</h1>
+  <h1 class="text-lg font-normal">Chrome 58+, Bluetooth Web API, Front End Built on Svelte JS and Tailwind CSS</h1>
 </div>
 
 <div class="absolute flex w-screen h-2/3 items-center justify-center">
