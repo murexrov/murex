@@ -78,7 +78,7 @@ void setup() {
   Serial.println("UTC and Team Number Indicator - BLE");
 
   // Built-in RTC random value set
-  rtc.setTime(59, 26, 13, 23, 12, 2022);
+  rtc.setTime(0, 0, 0, 1, 1, 2023);
 
   // Initializes the BLE server
   InitBLE();
