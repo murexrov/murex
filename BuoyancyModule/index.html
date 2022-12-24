@@ -1,6 +1,9 @@
 <button id="read">Connect with BLE device</button>
 <button id="start" disabled>Start</button>
 <button id="stop" disabled>Stop</button>
+<button id="writeCurrentTime">Update to Current Time</button>
+<button id="write">Write Custom Text</button>
+<input id="input" placeholder="custom text input"></input>
 
 <script>
   var deviceName = 'ESP32 Byran'
@@ -19,6 +22,14 @@
 
   document.querySelector('#stop').addEventListener('click', function(event) {
     if (isWebBluetoothEnabled()) { stop() }
+  })
+
+  document.querySelector('#write').addEventListener('click', function(event) {
+    if (isWebBluetoothEnabled()) { write(document.querySelector('#input').value) }
+  })
+
+  document.querySelector('#writeCurrentTime').addEventListener('click', function(event) {
+    if (isWebBluetoothEnabled()) { write(new Date(Date.now()).getUTCHours() + " " + new Date(Date.now()).getUTCMinutes() + " " + new Date(Date.now()).getUTCSeconds() + " ") }
   })
 
   function isWebBluetoothEnabled() {
@@ -47,9 +58,18 @@
   }
 
   function write(value) {
-    let encoder = new TextEncoder();
+    let encoder = new TextEncoder('utf-8');
     let array = encoder.encode(value);
-    gattCharacteristic.writeValue(array);
+    // gattCharacteristic.writeValue(array);
+    return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
+    .then(connectGATT)
+    .then(_ => {
+      console.log('Writing Custom Characteristic...')
+      return gattCharacteristic.writeValue(array)
+    })
+    .catch(error => {
+      console.log('[ERROR] Waiting to start writing: ' + error)
+    })
   }
 
   function read() {
