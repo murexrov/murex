@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    @apply bg-neutral-900;
+}
+
+button {
+    @apply text-neutral-300;
+    @apply border;
+    @apply border-neutral-500;
+    @apply bg-gradient-to-br;
+    @apply from-neutral-700;
+    @apply to-neutral-600;
+    @apply m-2;
+    @apply p-1;
+    @apply px-2;
+    @apply rounded-md;
+    @apply hover:scale-105;
+    @apply duration-200;
+    @apply drop-shadow-md;
+    @apply font-medium;
+    @apply disabled:bg-neutral-500;
+    @apply disabled:text-neutral-500;
+    @apply disabled:border-neutral-600;
+}
+
+input {
+    @apply bg-neutral-700;
+    @apply text-neutral-300;
+    @apply border;
+    @apply border-neutral-500;
+    @apply m-2;
+    @apply p-1;
+    @apply rounded-md;
+    @apply hover:scale-105;
+    @apply duration-200;
+    @apply placeholder:text-neutral-400;
+}
