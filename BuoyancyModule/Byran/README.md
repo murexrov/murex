@@ -2,7 +2,7 @@
 
 ## Expected Behavior
 
-After upload the `.ino` to the ESP32, the ESP32 will being advertising over Bluetooth. With a supported browser, launch the `FrontEnd` with `npm run dev`. A random time and the team number will show. Press `Start Reporting`, then press `Update to Current Time` to synchronize the ESP32 onboard RTC with the topside computer's RTC. **All of this can be run offline**
+After uploading the `.ino` to the ESP32, the ESP32 will begin advertising over Bluetooth. With a supported browser, launch the `FrontEnd` with `npm run dev`. A random time and the team number will show. Press `Start Reporting`, then press `Update to Current Time` to synchronize the ESP32 onboard RTC with the topside computer's RTC. **All of this can be run offline**
 
 ![Front End Screenshot](assets/frontend.png)
 
