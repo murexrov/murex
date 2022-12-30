@@ -1,30 +1,15 @@
-// ---------------------------------------------------------------------------------------
-//
-// Code for a simple webserver on the ESP32 (device used for tests: ESP32-WROOM-32D).
-// The code generates two random numbers on the ESP32 and uses Websockets to continuously
-// update the web-clients. For data transfer JSON encapsulation is used.
-//
-// For installation, the following libraries need to be installed:
-// * Websockets by Markus Sattler (can be tricky to find -> search for "Arduino Websockets"
-// * ArduinoJson by Benoit Blanchon
-//
-// NOTE: in principle this code is universal and can be used on Arduino AVR as well. However, AVR is only supported with version 1.3 of the webSocketsServer. Also, the Websocket
-// library will require quite a bit of memory, so wont load on Arduino UNO for instance. The ESP32 and ESP8266 are cheap and powerful, so use of this platform is recommended. 
-//
-// Refer to https://youtu.be/15X0WvGaVg8
-//
-// Written by mo thunderz (last update: 27.08.2022)
-//
-// ---------------------------------------------------------------------------------------
-
 #include <WiFi.h>                                     // needed to connect to WiFi
 #include <WebServer.h>                                // needed to create a simple webserver (make sure tools -> board is set to ESP32, otherwise you will get a "WebServer.h: No such file or directory" error)
 #include <WebSocketsServer.h>                         // needed for instant communication between client and server through Websockets
 #include <ArduinoJson.h>                              // needed for JSON encapsulation (send multiple variables with one string)
+#include <ESP32Time.h>                                // needed to get real time from ESP32
 
 // SSID and password of Wifi connection:
 const char* ssid = "murex";
 const char* password = "murex123";
+
+// Instantiates ESP32's internal RTC
+ESP32Time rtc(0);
 
 // Configure IP addresses of the local access point
 IPAddress local_IP(192,168,100,1);
@@ -37,6 +22,7 @@ String webpage = "<!DOCTYPE html><html><head><title>Page Title</title></head><bo
 // We want to periodically send values to the clients, so we need to define an "interval" and remember the last time we sent data to the client (with "previousMillis")
 int interval = 1000;                                  // send data to the client every 1000ms -> 1s
 unsigned long previousMillis = 0;                     // we use the "millis()" command for time reference and this will output an unsigned long
+string prev = "0 0 0";
 
 // Initialization of webserver and websocket
 WebServer server(80);                                 // the server uses port 80 (standard port for websites
@@ -44,6 +30,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);    // the websocket uses port
 
 void setup() {
   Serial.begin(115200);                               // init serial port for debugging
+
+  rtc.setTime(0, 0, 0, 1, 1, 2023);                   // built-in RTC random value set
  
   Serial.print("Setting up Access Point ... ");
   Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
@@ -73,7 +61,19 @@ void loop() {
     String jsonString = "";                           // create a JSON string for sending data to the client
     StaticJsonDocument<200> doc;                      // create a JSON container
     JsonObject object = doc.to<JsonObject>();         // create a JSON Object
-    object["time"] = new Date(Date.now());
+    int timeArray[3], r = 0, t = 0;
+    for (int i = 0; i < inputFromComputer.length(); i++) {
+      if (inputFromComputer.charAt(i) == ' ') {
+        timeArray[t] = inputFromComputer.substring(r, i).toInt();
+        r = (i + 1);
+        t++;
+      }
+    }
+    int offset = 2;
+    rtc.setTime(timeArray[2] + offset, timeArray[1], timeArray[0], 1, 1, 2023);
+    string time = ((rtc.getTime("%H:%M:%S")).c_str());
+    object["time"] = time;
+    prev = time;
     serializeJson(doc, jsonString);                   // convert JSON object to string
     Serial.println(jsonString);                       // print JSON string to console for debug purposes
     webSocket.broadcastTXT(jsonString);               // send JSON string to clients
