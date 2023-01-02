@@ -1,6 +1,6 @@
 #include <WiFi.h>                                     // needed to connect to WiFi
 #include <WebServer.h>                                // needed to create a simple webserver (make sure tools -> board is set to ESP32, otherwise you will get a "WebServer.h: No such file or directory" error)
-#include <WebSocketsServer.h>                         // needed for instant communication between client and server through Websockets
+#include <WebSocketsServer.h>                        // needed for instant communication between client and server through Websockets
 #include <ArduinoJson.h>                              // needed for JSON encapsulation (send multiple variables with one string)
 #include <ESP32Time.h>                                // needed to get real time from ESP32
 
@@ -22,7 +22,7 @@ String webpage = "<!DOCTYPE html><html><head><title>Page Title</title></head><bo
 // We want to periodically send values to the clients, so we need to define an "interval" and remember the last time we sent data to the client (with "previousMillis")
 int interval = 1000;                                  // send data to the client every 1000ms -> 1s
 unsigned long previousMillis = 0;                     // we use the "millis()" command for time reference and this will output an unsigned long
-string prev = "0 0 0";
+String prev = "0 0 0";
 
 // Initialization of webserver and websocket
 WebServer server(80);                                 // the server uses port 80 (standard port for websites
@@ -62,16 +62,16 @@ void loop() {
     StaticJsonDocument<200> doc;                      // create a JSON container
     JsonObject object = doc.to<JsonObject>();         // create a JSON Object
     int timeArray[3], r = 0, t = 0;
-    for (int i = 0; i < inputFromComputer.length(); i++) {
-      if (inputFromComputer.charAt(i) == ' ') {
-        timeArray[t] = inputFromComputer.substring(r, i).toInt();
+    for (int i = 0; i < prev.length(); i++) {
+      if (prev.charAt(i) == ' ') {
+        timeArray[t] = prev.substring(r, i).toInt();
         r = (i + 1);
         t++;
       }
     }
     int offset = 2;
     rtc.setTime(timeArray[2] + offset, timeArray[1], timeArray[0], 1, 1, 2023);
-    string time = ((rtc.getTime("%H:%M:%S")).c_str());
+    String time = ((rtc.getTime("%H:%M:%S")).c_str());
     object["time"] = time;
     prev = time;
     serializeJson(doc, jsonString);                   // convert JSON object to string
