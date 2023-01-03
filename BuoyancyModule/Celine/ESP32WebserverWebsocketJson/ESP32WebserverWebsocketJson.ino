@@ -31,7 +31,7 @@ void setup() {
   Serial.begin(115200);                               // init serial port for debugging
 
   rtc.setTime(0, 0, 0, 1, 1, 2023);                   // built-in RTC random value set
- 
+
   Serial.print("Setting up Access Point ... ");
   Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
 
@@ -40,23 +40,23 @@ void setup() {
 
   Serial.print("IP address = ");
   Serial.println(WiFi.softAPIP());
-  
+
   server.on("/", []() {                               // define here wat the webserver needs to do
     server.send(200, "text/html", webpage);           //    -> it needs to send out the HTML string "webpage" to the client
   });
   server.begin();                                     // start server
-  
+
   webSocket.begin();                                  // start websocket
   webSocket.onEvent(webSocketEvent);                  // define a callback function -> what does the ESP32 need to do when an event from the websocket is received? -> run function "webSocketEvent()"
 }
 
 void loop() {
   server.handleClient();                              // Needed for the webserver to handle all clients
-  webSocket.loop();                                   // Update function for the webSockets 
-  
+  webSocket.loop();                                   // Update function for the webSockets
+
   unsigned long now = millis();                       // read out the current "time" ("millis()" gives the time in ms since the Arduino started)
   if ((unsigned long)(now - previousMillis) > interval) { // check if "interval" ms has passed since last time the clients were updated
-    
+
     String jsonString = "";                           // create a JSON string for sending data to the client
     StaticJsonDocument<200> doc;                      // create a JSON container
     JsonObject object = doc.to<JsonObject>();         // create a JSON Object
@@ -75,7 +75,7 @@ void loop() {
     serializeJson(doc, jsonString);                   // convert JSON object to string
     Serial.println(jsonString);                       // print JSON string to console for debug purposes
     webSocket.broadcastTXT(jsonString);               // send JSON string to clients
-    
+
     previousMillis = now;                             // reset previousMillis
   }
 }
