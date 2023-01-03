@@ -22,7 +22,6 @@ String webpage = "<!DOCTYPE html><html><head><title>Page Title</title></head><bo
 // We want to periodically send values to the clients, so we need to define an "interval" and remember the last time we sent data to the client (with "previousMillis")
 int interval = 1000;                                  // send data to the client every 1000ms -> 1s
 unsigned long previousMillis = 0;                     // we use the "millis()" command for time reference and this will output an unsigned long
-String prev = "0 0 0";
 
 // Initialization of webserver and websocket
 WebServer server(80);                                 // the server uses port 80 (standard port for websites
@@ -62,18 +61,17 @@ void loop() {
     StaticJsonDocument<200> doc;                      // create a JSON container
     JsonObject object = doc.to<JsonObject>();         // create a JSON Object
     int timeArray[3], r = 0, t = 0;
-    for (int i = 0; i < prev.length(); i++) {
-      if (prev.charAt(i) == ' ') {
-        timeArray[t] = prev.substring(r, i).toInt();
+    String time = ((rtc.getTime("%H:%M:%S")).c_str());
+    for (int i = 0; i < time.length(); i++) {
+      if (time.charAt(i) == ' ') {
+        timeArray[t] = time.substring(r, i).toInt();
         r = (i + 1);
         t++;
       }
     }
     int offset = 2;
     rtc.setTime(timeArray[2] + offset, timeArray[1], timeArray[0], 1, 1, 2023);
-    String time = ((rtc.getTime("%H:%M:%S")).c_str());
     object["time"] = time;
-    prev = time;
     serializeJson(doc, jsonString);                   // convert JSON object to string
     Serial.println(jsonString);                       // print JSON string to console for debug purposes
     webSocket.broadcastTXT(jsonString);               // send JSON string to clients
