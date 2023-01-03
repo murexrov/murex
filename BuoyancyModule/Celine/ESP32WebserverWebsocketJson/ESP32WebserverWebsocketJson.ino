@@ -53,7 +53,7 @@ void loop() {
   StaticJsonDocument<200> doc;                      // create a JSON container
   JsonObject object = doc.to<JsonObject>();         // create a JSON Object
   int timeArray[3], r = 0, t = 0;
-  String time = (rtc.getTime("%H:%M:%S");
+  String time = rtc.getTime("%H:%M:%S");
   for (int i = 0; i < time.length(); i++) {
     if (time.charAt(i) == ' ') {
       timeArray[t] = time.substring(r, i).toInt();
@@ -61,8 +61,6 @@ void loop() {
       t++;
     }
   }
-  int offset = 2;
-  rtc.setTime(timeArray[2] + offset, timeArray[1], timeArray[0], 1, 1, 2023);
   object["time"] = time;
   serializeJson(doc, jsonString);                   // convert JSON object to string
   Serial.println(jsonString);                       // print JSON string to console for debug purposes
@@ -90,7 +88,17 @@ void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
       }
       else {
         // JSON string was received correctly, so information can be retrieved:
-        const char* time = doc["time"];
+        String time = doc["time"];
+        int timeArray[3], r = 0, t = 0;
+        for (int i = 0; i < time.length(); i++) {
+          if (time.charAt(i) == ' ') {
+            timeArray[t] = time.substring(r, i).toInt();
+            r = (i + 1);
+            t++;
+          }
+        }
+        int offset = 0;
+        rtc.setTime(timeArray[2] + offset, timeArray[1], timeArray[0], 1, 1, 2023);
         Serial.println("Received info from user: " + String(num));
         Serial.println("Time: " + String(time));
       }
