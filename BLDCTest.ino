@@ -1,19 +1,32 @@
-#include <Servo.h>
+#define CW_CWW_PIN 10
+#define PWM_PIN 11
 
-Servo motor1;
-int potentio1;
-int speed1;
+long pwm = 0;
 
 void setup() {
-  //change motor pin here; default=3
-  motor1.attach(3);
-  Serial.begin(9600);
+  Serial.begin(115200);
+  pinMode(CW_CWW_PIN, OUTPUT);
+  pinMode(PWM_PIN, OUTPUT);
 }
 
 void loop() {
-  //change potentiometer pin here; default=A0
-  potentio1=analogRead(A0);
-  speed1=map(potentio1,0,1023,0,180);
-  motor1.write(speed1);
-  Serial.println(speed1);
+  if (Serial.available()) {
+    //input speed, must be int between -255 and 255
+    //-255 = max speed backward; 0 = stop; 255 = max speed forward
+    pwm=Serial.parseInt();
+    if (pwm<0 && pwm>=-255) {
+      digitalWrite(CW_CWW_PIN, LOW);
+      //actual pwm: 0 = max speed; 255 = stop
+      analogWrite(PWM_PIN, 255+pwm);
+    }
+    else if (pwm>=0 && pwm<=255) {
+      digitalWrite(CW_CWW_PIN, HIGH);
+      //actual pwm: 0 = max speed; 255 = stop
+      analogWrite(PWM_PIN, 255-pwm);
+    }
+    else {
+      Serial.println("INVALID SPEED");
+    }
+    delay(200);
+  }
 }
