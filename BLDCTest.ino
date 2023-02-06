@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 #define CW_CWW_PIN 10
 #define PWM_PIN 11
 
