@@ -10,8 +10,6 @@ import neopixel
 import socket
 import sys
 import logging
-import asyncio
-import telemetry_server
 
 logging.basicConfig(level=logging.DEBUG, filename="DEBUGLOG.log", filemode="w", format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S')
 

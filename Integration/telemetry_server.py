@@ -8,6 +8,8 @@ import os
 
 CONNECTIONS = set()
 
+n = 0
+
 async def register(websocket):
     CONNECTIONS.add(websocket)
     try:
@@ -15,15 +17,33 @@ async def register(websocket):
     finally:
         CONNECTIONS.remove(websocket)
 
-async def echo(var):
+async def echo():
+    global n
     while True:
-        websockets.broadcast(CONNECTIONS, var)
+        websockets.broadcast(CONNECTIONS, str(n))
         await asyncio.sleep(1)
 
-
-async def main(var):
+async def main():
     async with websockets.serve(register, "localhost", 5678):
-        await echo(var)
+        await echo()
+
+
+def infiniteloop2():
+    global n
+    n = 0
+    while True:
+        print(n)
+        n += 1
+        time.sleep(1)
+
+thread1 = threading.Thread(target=asyncio.run, args=(main(),))
+thread1.start()
+
+thread2 = threading.Thread(target=infiniteloop2)
+thread2.start()
+
+thread1.join()
+thread2.join()
 
 camera_servo_angle = 0
 
@@ -93,5 +113,3 @@ output_dictionary = {
     },
     "camera_angle": camera_servo_angle,
 }
-
-asyncio.run(main(json.dumps(output_dictionary, indent = 4)))
