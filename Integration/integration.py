@@ -10,8 +10,10 @@ import neopixel
 import socket
 import sys
 import logging
+import asyncio
+import telemetry_server
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, filename="DEBUGLOG.log", filemode="w", format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S')
 
 ip = "192.168.100.1"
 port = int(6666)
@@ -44,11 +46,76 @@ ORDER = neopixel.GRB
 pixels = neopixel.NeoPixel(
     pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=ORDER
 )
-neopixel_r, neopixel_g, neopixel_b = 255, 255, 255
 
 # @TODO: verify thresholds for camera servo
 camera_servo_angle = 0
 camera_servo = servo.Servo(pca.channels[10])
+
+neopixel_r, neopixel_g, neopixel_b = 255, 255, 255
+
+thruster_fr = None
+thruster_fl = None
+thruster_br = None
+thruster_bl = None
+thruster_v1 = None
+thruster_v2 = None
+bldc_0 = None
+bldc_1 = None
+bldc_2 = None
+bldc_3 = None
+bme680_temperature = None
+bme680_gas = None
+bme680_humidity = None
+bme680_pressure = None
+bme680_altitude = None
+
+output_dictionary = {
+    "thruster": {
+        "fr": thruster_fr,
+        "fl": thruster_fl,
+        "br": thruster_br,
+        "bl": thruster_bl,
+        "v1": thruster_v1,
+        "v2": thruster_v2,
+    },
+    "arm": {
+        "bldc_0": bldc_0,
+        "bldc_1": bldc_1,
+        "bldc_2": bldc_2,
+        "bldc_3": bldc_3,
+    },
+    "bme680": {
+        "temperature": bme680_temperature,
+        "gas": bme680_gas,
+        "humidity": bme680_humidity,
+        "pressure": bme680_pressure,
+        "altitude": bme680_altitude,
+    },
+    "joystick": {
+        "joystick_left": "",
+        "joystick_right": "",
+        "button_y": "",
+        "button_x": "",
+        "button_b": "",
+        "button_a": "",
+        "button_joystick_left": "",
+        "button_joystick_right": "",
+        "button_menu": "",
+        "button_window": "",
+        "button_xbox_logo": "",
+        "d_pad": "",
+        "trigger_right": "",
+        "trigger_left": "",
+        "bumper_right": "",
+        "bumper_left": "",
+    },
+    "neopixel": {
+        "red": neopixel_r,
+        "green": neopixel_g,
+        "blue": neopixel_b,
+    },
+    "camera_angle": camera_servo_angle,
+}
 
 # Thruster Fraction Range: -1 (-max [1100]), 0 (neutral [1500]), 1 (max [1900])
 def set_thrusters(a, b, c, d, e, f):
@@ -110,12 +177,17 @@ def end():
     # running it again makes sure the motors stop
     init_thrusters()
 
-def log_bme680(bme680, bme680_temperature_offset):
+def get_and_log_bme680(bme680, bme680_temperature_offset):
     logging.info("\nTemperature: %0.1f C" % (bme680.temperature + bme680_temperature_offset))
+    bme680_temperature = bme680.temperature + bme680_temperature_offset
     logging.info("Gas: %d ohm" % bme680.gas)
+    bme680_gas = bme680.gas
     logging.info("Humidity: %0.1f %%" % bme680.relative_humidity)
+    bme680_humidity = bme680.humidity
     logging.info("Pressure: %0.3f hPa" % bme680.pressure)
+    bme680_pressure = bme680.pressure
     logging.info("Altitude = %0.2f meters" % bme680.altitude)
+    bme680_altitude = bme680.altitude
 
 def set_left_joystick_position(gamepad_map_joystick, gamepad_hid_code, game_state, joystick_position_left):
     logging.info("Setting Left Joystick Position")
@@ -177,6 +249,7 @@ def rotate_camera(camera_servo_angle, camera_servo, gamepad_hid_code, game_state
         if (not camera_servo_angle <= 180 and not camera_servo_angle >= 0):
             logging.debug("Camera Angle:", camera_servo_angle)
             camera_servo.angle(camera_servo_angle)
+    return(camera_servo_angle)
 
 if __name__ == "__main__":
     try:
@@ -195,12 +268,12 @@ if __name__ == "__main__":
 
         while True:
 
-            log_bme680(bme680, bme680_temperature_offset)
+            get_and_log_bme680(bme680, bme680_temperature_offset)
 
             gamepad_hid_code, game_state = get_gamepad_input(gamepad_stream_in, gamepad_map)
 
-            set_left_joystick_position(gamepad_hid_code, game_state, joystick_position_left)
-            set_right_joystick_position(gamepad_hid_code, game_state, joystick_position_right)
+            joystick_position_left = set_left_joystick_position(gamepad_hid_code, game_state, joystick_position_left)
+            joystick_position_right = set_right_joystick_position(gamepad_hid_code, game_state, joystick_position_right)
 
             # Aidan's Thrust Vectoring Formula
             turn_right, turn_left = set_turning(joystick_position_right)
@@ -224,7 +297,7 @@ if __name__ == "__main__":
             # arm_bldcs[2] = turning 1
             # arm_bldcs[3] = turning 2
 
-            rotate_camera(camera_servo_angle, camera_servo, gamepad_hid_code, game_state)
+            camera_servo_angle = rotate_camera(camera_servo_angle, camera_servo, gamepad_hid_code, game_state)
 
             # @TODO: host webserver with telemetry/diagnostic data?
             # @TODO: better debugging/logging potential
@@ -232,6 +305,9 @@ if __name__ == "__main__":
             # Change color of Neopixel
             pixels.fill((neopixel_r, neopixel_g, neopixel_b))
             logging.debug("Neopixel Color (RGB):", neopixel_r, ",", neopixel_b, ",", neopixel_g)
+
+            # Stream Telemetry
+            # asyncio.run(telemetry_server.main(output_dictionary))
 
     except KeyboardInterrupt:
         end()
